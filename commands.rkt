@@ -1,0 +1,148 @@
+#lang racket/base
+(provide (all-defined-out))
+(require racket/gui
+         racket/draw
+         (for-syntax syntax/parse
+                     racket/base))
+
+(require "world.rkt")
+
+(define (logo-set-position x y)
+  (match-define (world turt canvas _) (current-world))
+  (match-define (turtle old-x old-y ang pen-down) turt)
+  (set-turtle-x! turt (scale-to-width  x))
+  (set-turtle-y! turt (scale-to-height y))
+  (when pen-down
+    (send canvas draw-line old-x old-y x y)))
+
+(define (logo-forward n)
+  (match-define (world turt canvas _) (current-world))
+  (match-define (turtle old-x old-y ang pen-down) turt)
+  (define new-x (scale-to-width  (+ old-x (* (cos ang) n))))
+  (define new-y (scale-to-height (+ old-y (* (sin ang) n))))
+  (logo-set-position new-x new-y))
+
+(define (logo-back n)
+  (logo-forward (- n)))
+
+(define (logo-right deg)
+  (match-define (world turt _ _) (current-world))
+  (define rads (degrees->radians deg))
+  (set-turtle-ang! turt (+ (turtle-ang turt) rads)))
+
+(define (logo-left deg)
+  (logo-right (- deg)))
+
+(define (logo-pen-up)
+  (match-define (world turt _ _) (current-world))
+  (set-turtle-pen-down! turt #f))
+
+(define (logo-pen-down)
+  (match-define (world turt _ _) (current-world))
+  (set-turtle-pen-down! turt #t))
+
+(define (logo-clear)
+  (match-define (world _ canvas _) (current-world))
+  (send canvas clear))
+
+(define (logo-home)
+  (logo-set-position 500 500))
+
+(define (logo-print output)
+  (match-define (world _ _ text) (current-world))
+  (send text insert (format "~a~%" output)))
+
+(define (logo-error output)
+  (match-define (world _ _ text) (current-world))
+  (define style-delta (make-object style-delta%
+                                   'change-normal-color))
+  (send style-delta set-delta-foreground "red")
+  (send text change-style style-delta)
+  (logo-print (format "Error: ~a" output))
+  (send style-delta set-delta-foreground "black")
+  (send text change-style style-delta))
+
+(define (logo-random n)
+  (random 0 (add1 n)))
+
+(define (logo-expr x)
+  x)
+
+(define (logo-sum n [op #f] [m #f])
+  (case op
+    [("+") (+ n m)]
+    [("-") (- n m)]
+    [else n]))
+
+(define (logo-negative n [m #f])
+  (case n
+    [("-") (- m)]
+    [else n]))
+
+(define (logo-product n [op #f] [m #f])
+  (case op
+    [("*") (* n m)]
+    [("/") (/ n m)]
+    [else n]))
+
+(define (logo-not x [y #f])
+  (case x
+    [("not") (not y)]
+    [else x]))
+
+(define (logo-cond x op y)
+  (case op
+    [("=") (= x y)]
+    [("<") (< x y)]
+    [(">") (> x y)]
+    [("!=") (not (= x y))]))
+
+(define-syntax (logo-if stx)
+  (syntax-parse stx
+    #:datum-literals (logo-program)
+    [(_ expr (logo-program statements ...))
+     #'(when expr
+         statements ...)]
+    [(_ expr (logo-program true-statements ...) (logo-program false-statements ...))
+     #'(cond [expr true-statements ...]
+             [else false-statements ...])]))
+
+(define-syntax (logo-to stx)
+  (syntax-parse stx
+    #:datum-literals (logo-program)
+    [(_ id args ... (logo-program commands ...))
+     #'(set! id
+             (lambda (args ...)
+               commands ...))]))
+
+(struct stop-signal (value))
+
+(define (logo-stop)
+  (raise (stop-signal (void))))
+
+(define (logo-output x)
+  (raise (stop-signal x)))
+
+(define-syntax (logo-command stx)
+  (syntax-parse stx
+    [(_ id args ...)
+     #:with arity       (length (syntax->list #'(args ...)))
+     #:with line-number (syntax-line #'id)
+     #`(cond [(= 'arity (procedure-arity id))
+              (with-handlers ([stop-signal? (lambda (sig)
+                                              (stop-signal-value sig))])
+                (id args ...))]
+             [else
+              (logo-error (format "Too ~a arguments given to ~a at line ~a."
+                                  (if (> 'arity (procedure-arity id))
+                                      "many"
+                                      "few")
+                                  'id 'line-number))])]))
+
+(define-syntax (logo-repeat stx)
+  (syntax-parse stx
+    [(_ n statements ...)
+     #'(let loop ((i n))
+         (when (> i 0)
+           statements ...
+           (loop (- i 1))))]))

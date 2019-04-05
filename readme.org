@@ -1,0 +1,63 @@
+#+AUTHOR: Simon Stoltze
+#+EMAIL: sstoltze@gmail.com
+#+DATE: 2019-04-05
+#+OPTIONS: toc:nil title:nil author:nil email:nil date:nil creator:nil
+* Logo
+
+This is a small project implementing a subset of [[https://el.media.mit.edu/logo-foundation/index.html][Logo]], used for learning how to build/design languages in [[https://racket-lang.org/][Racket]]. The style and code is heavily influenced by [[https://beautifulracket.com/][Beautiful Racket]].
+
+** Documentation
+This package currently supports a small subset of the logo programming language. It only works in batch mode.
+
+It currently supports the following commands:
+
+*** forward /n/, back /n/
+Moves the turtle forwards or backwards /n/ steps.
+
+*** right /n/, left /n/
+Turns the turtle /n/ degrees right or left.
+
+*** penup, pendown
+Moves the pen up to stop drawing when moving, or down to continue drawing.
+
+*** home
+Moves the turtle to the center of the screen.
+
+*** clear
+Removes all drawings.
+
+*** setposition /x/ /y/, setpos /x/ /y/, setxy /x/ /y/
+Moves the turtle to position (/x/,/y/).
+
+*** random /n/
+Returns a random number between 0 and /n/.
+
+*** repeat /n/ [ /expressions .../ ]
+Repeats the expressions in brackets /n/ times.
+
+*** if /conditional/ [ /true-expressions .../ ] ( [ /false-expressions .../ ] )
+Tests a simple numeric condition and runs the first bracket if true and (if the second bracket is supplied) the second bracket if false.
+
+*** to /id/ /arguments .../ /expressions .../ end
+Defines a new procedure. Arguments are supplied with a leading colon. For example
+#+begin_src logo
+to flower :size
+repeat 36 [right 10 square :size]
+end
+#+end_src
+defines a new procedure that can then be called with
+#+begin_src logo
+flower 50
+#+end_src
+
+**** stop
+Inside a /to ... end/ statement, stop immediately returns from the procedure.
+
+**** output /n/
+Like stop, but returns the value /n/.
+
+*** print /expressions .../
+Prints the expressions to the log.
+
+** Installation
+To use the program, clone the repository and install it as a package with raco. It should then be ready for use with #lang.
