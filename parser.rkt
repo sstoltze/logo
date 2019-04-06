@@ -6,18 +6,18 @@ logo-program    : [logo-line] ((/NEWLINE)* [logo-line])*
                 | logo-stop | logo-output | logo-pen-up | logo-pen-down | logo-print | logo-back
                 | logo-set-position | logo-random
                 | logo-command
-logo-forward    : /"forward" logo-expr
-logo-back       : /"back"    logo-expr
-logo-right      : /"right"   logo-expr
-logo-left       : /"left"    logo-expr
+logo-forward    : /("forward"|"fd") logo-expr
+logo-back       : /("back"|"bk")    logo-expr
+logo-right      : /("right"|"rt")   logo-expr
+logo-left       : /("left"|"lt")    logo-expr
 logo-repeat     : /"repeat"  logo-expr /"[" @logo-program /"]"
 logo-to         : /"to" logo-id ([logo-argument])* logo-program /"end"
 logo-if         : /"if" logo-not /"[" logo-program /"]" [/"[" logo-program /"]"]
 logo-stop       : /"stop"
 logo-output     : /"output" logo-expr
-logo-pen-up     : /"penup"
-logo-pen-down   : /"pendown"
-logo-clear      : /"clear"
+logo-pen-up     : /("penup"|"pu")
+logo-pen-down   : /("pendown"|"pd")
+logo-clear      : /("clear"|"clearscreen"|"cs")
 logo-home       : /"home"
 logo-print      : /"print" logo-expr
 logo-set-position : /("setposition"|"setpos"|"setxy") logo-expr logo-expr

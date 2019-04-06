@@ -7,23 +7,32 @@
 This is a small project implementing a subset of [[https://el.media.mit.edu/logo-foundation/index.html][Logo]], used for learning how to build/design languages in [[https://racket-lang.org/][Racket]]. The style and code is heavily influenced by [[https://beautifulracket.com/][Beautiful Racket]].
 
 ** Documentation
-This package currently supports a small subset of the logo programming language. It only works in batch mode.
+To learn more about Logo, consult the primer at the [[https://el.media.mit.edu/logo-foundation/what_is_logo/logo_primer.html][Logo foundation]].
 
-It currently supports the following commands:
+This implementation supports the following commands:
 
-*** forward /n/, back /n/
-Moves the turtle forwards or backwards /n/ steps.
+*** forward /n/, fd /n/
+Moves the turtle forwards /n/ steps.
 
-*** right /n/, left /n/
-Turns the turtle /n/ degrees right or left.
+***  back /n/, bk /n/
+Moves the turtle backwards /n/ steps.
 
-*** penup, pendown
-Moves the pen up to stop drawing when moving, or down to continue drawing.
+*** right /n/, rt /n/
+Turns the turtle /n/ degrees right.
+
+*** left /n/, lt /n/
+Turns the turtle /n/ degrees left.
+
+*** penup, pu
+Moves the pen up to stop drawing when moving.
+
+*** pendown, pd
+Moves the pen down to resume drawing when moving.
 
 *** home
 Moves the turtle to the center of the screen.
 
-*** clear
+*** clearscreen, clear, cs
 Removes all drawings.
 
 *** setposition /x/ /y/, setpos /x/ /y/, setxy /x/ /y/
@@ -36,7 +45,17 @@ Returns a random number between 0 and /n/.
 Repeats the expressions in brackets /n/ times.
 
 *** if /conditional/ [ /true-expressions .../ ] ( [ /false-expressions .../ ] )
-Tests a simple numeric condition and runs the first bracket if true and (if the second bracket is supplied) the second bracket if false.
+Tests a simple numeric condition and runs the first bracket if true and the second bracket if false. The second bracket is optional.
+
+**** Conditionals
+The conditions in the /if/ statement can be of the form
+#+begin_src logo
+n = m
+n != m
+n < m
+n > m
+#+end_src
+and all of these can be prefaced with /not/ to change the value.
 
 *** to /id/ /arguments .../ /expressions .../ end
 Defines a new procedure. Arguments are supplied with a leading colon. For example
@@ -51,13 +70,78 @@ flower 50
 #+end_src
 
 **** stop
-Inside a /to ... end/ statement, stop immediately returns from the procedure.
+Inside a /to/ statement, stop immediately returns from the procedure.
 
 **** output /n/
 Like stop, but returns the value /n/.
 
-*** print /expressions .../
-Prints the expressions to the log.
+*** print /expression/
+Prints the result of the expression to the log.
 
 ** Installation
 To use the program, clone the repository and install it as a package with raco. It should then be ready for use with #lang.
+
+** Notes
+This package currently supports a small subset of the logo programming language. It only works in batch mode, so the generated image can not be changed once the program is run.
+Currently, integers and strings are the only working data types. There are no floats. Strings can be written both as "string1" and 'string2'. Both () and [] can be used as parentheses.
+
+** Sample programs
+
+*** Pattern
+[[./sample-programs/pattern.rkt][Link]]
+**** Code
+#+begin_src logo
+#lang logo
+
+to pattern
+repeat 12 [penup forward 60 pendown repeat 4 [forward 45 right 90] penup back 60 left 30]
+end
+
+pattern
+#+end_src
+
+**** Output
+[[./images/pattern.png]]
+
+*** Garden
+[[./sample-programs/garden.rkt][Link]]
+**** Code
+#+begin_src logo
+#lang logo
+
+to square :size
+repeat 4 [forward :size right 90]
+end
+
+to flower :size
+repeat 36 [right 10 square :size]
+end
+
+to garden :number :size
+repeat :number [penup setposition random 1000 random 1000 pendown flower :size]
+end
+
+garden 20 50
+#+end_src
+
+**** Output
+[[./images/garden.png]]
+
+*** Factorial
+[[./sample-programs/factorial.rkt][Link]]
+**** Code
+#+begin_src logo
+#lang logo
+
+to factorial :number
+if :number = 1 [output 1]
+output :number * factorial [:number - 1]
+end
+
+print factorial 5
+
+forward factorial 10
+#+end_src
+
+**** Output
+[[./images/factorial.png]]

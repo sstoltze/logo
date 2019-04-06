@@ -8,7 +8,8 @@
                                        "to" "end" "if" "+" "-" "/" "*" "!=" "="
                                        "<" ">" "(" ")" "stop" "output" "penup" "pendown"
                                        "print" "setposition" "setpos" "setxy"
-                                       "random" "not" "clear" "home"))
+                                       "random" "not" "clear" "home" "clearscreen"
+                                       "fd" "bk" "rt" "lt" "pd" "pu" "cs"))
 (define-lex-abbrev digits (:+ (char-set "0123456789")))
 
 (define logo-lexer
