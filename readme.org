@@ -88,7 +88,7 @@ Currently, integers and strings are the only working data types. There are no fl
 ** Sample programs
 
 *** Pattern
-[[./sample-programs/pattern.rkt][Link]]
+[[./sample-programs/pattern.rkt][Link to file]].
 **** Code
 #+begin_src logo
 #lang logo
@@ -104,7 +104,7 @@ pattern
 [[./images/pattern.png]]
 
 *** Garden
-[[./sample-programs/garden.rkt][Link]]
+[[./sample-programs/garden.rkt][Link to file]].
 **** Code
 #+begin_src logo
 #lang logo
@@ -128,7 +128,7 @@ garden 20 50
 [[./images/garden.png]]
 
 *** Factorial
-[[./sample-programs/factorial.rkt][Link]]
+[[./sample-programs/factorial.rkt][Link to file]].
 **** Code
 #+begin_src logo
 #lang logo
