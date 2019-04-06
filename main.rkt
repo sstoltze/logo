@@ -1,13 +1,8 @@
 #lang racket/base
 (module+ reader
   (provide read-syntax))
+(module configure-runtime racket/base
+  (require logo/reader)
+  (current-read-interaction read-syntax))
 (provide read-syntax)
-(require syntax/strip-context
-         "parser.rkt"
-         "tokenizer.rkt")
-
-(define (read-syntax path port)
-  (define parse-tree (parse path (make-tokenizer port path)))
-  (strip-context
-   #`(module logo-module logo/expander
-       #,parse-tree)))
+(require "reader.rkt")

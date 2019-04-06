@@ -3,10 +3,11 @@
          #%top #%app #%top-interaction #%datum
          (all-from-out "world.rkt" "commands.rkt"))
 
-(require "world.rkt" "commands.rkt"
+(require "world.rkt" "commands.rkt" "reader.rkt"
          (for-syntax syntax/parse
                      racket/list)
-         racket/gui
+         (except-in racket/gui
+                    read-syntax read)
          racket/draw)
 
 (define-syntax (logo-module-begin stx)
@@ -14,6 +15,9 @@
     [(_ (logo-program statements ...))
      #:with (id ...) (find-property 'logo-id #'(statements ...))
      #'(#%module-begin
+        (module configure-runtime racket/base
+          (require logo/reader)
+          (current-read-interaction read-syntax))
         (define id
           (lambda args (logo-error (format "I don't know how to ~a." 'id)))) ...
         (parameterize ([current-world (new-world)])
