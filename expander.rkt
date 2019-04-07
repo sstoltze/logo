@@ -20,9 +20,9 @@
           (current-read-interaction read-syntax))
         (define id
           (lambda args (logo-error (format "I don't know how to ~a." 'id)))) ...
-        (parameterize ([current-world (new-world)])
-          (sleep/yield 1)
-          statements ...))]))
+        (current-world (new-world))
+        (sleep/yield 1)
+        statements ...)]))
 
 (begin-for-syntax
   (define (syntax-flatten stx)

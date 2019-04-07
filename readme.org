@@ -82,7 +82,7 @@ Prints the result of the expression to the log.
 To use the program, clone the repository and install it as a package with raco. It should then be ready for use with #lang.
 
 ** Notes
-This package currently supports a small subset of the logo programming language. It only works in batch mode, so the generated image can not be changed once the program is run.
+This package currently supports a small subset of the logo programming language.
 Currently, integers and strings are the only working data types. There are no floats. Strings can be written both as "string1" and 'string2'. Both () and [] can be used as parentheses.
 
 ** Sample programs
@@ -145,3 +145,12 @@ forward factorial 10
 
 **** Output
 [[./images/factorial.png]]
+
+** Todo
+Implement error messages when parsing fails.
+
+Add support for statements that are just values, for ease of use.
+
+Implement more commands.
+
+Add a turtle.

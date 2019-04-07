@@ -1,5 +1,5 @@
 #lang racket/base
-(provide read-syntax)
+(provide read-syntax parse-logo)
 (require syntax/strip-context
          "parser.rkt"
          "tokenizer.rkt")
@@ -9,3 +9,6 @@
   (strip-context
    #`(module logo-module logo/expander
        #,parse-tree)))
+
+(define (parse-logo port)
+  (parse (make-tokenizer port #f)))

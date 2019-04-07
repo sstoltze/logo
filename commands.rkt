@@ -15,6 +15,11 @@
   (when pen-down
     (send canvas draw-line old-x old-y x y)))
 
+(define (logo-set-angle deg)
+  (match-define (world turt _ _) (current-world))
+  (define rads (degrees->radians deg))
+  (set-turtle-ang! turt rads))
+
 (define (logo-forward n)
   (match-define (world turt canvas _) (current-world))
   (match-define (turtle old-x old-y ang pen-down) turt)
@@ -46,21 +51,22 @@
   (send canvas clear))
 
 (define (logo-home)
-  (logo-set-position 500 500))
+  (define-values (starting-x starting-y starting-angle) (turtle-starting-position))
+  (logo-set-position starting-x starting-y)
+  (logo-set-angle starting-angle))
 
-(define (logo-print output)
-  (match-define (world _ _ text) (current-world))
-  (send text insert (format "~a~%" output)))
-
-(define (logo-error output)
+(define (logo-print output [color "black"])
   (match-define (world _ _ text) (current-world))
   (define style-delta (make-object style-delta%
                                    'change-normal-color))
-  (send style-delta set-delta-foreground "red")
+  (send style-delta set-delta-foreground color)
   (send text change-style style-delta)
-  (logo-print (format "Error: ~a" output))
+  (send text insert (format "~a~%" output))
   (send style-delta set-delta-foreground "black")
   (send text change-style style-delta))
+
+(define (logo-error output)
+  (logo-print (format "Error: ~a" output) "red"))
 
 (define (logo-random n)
   (random 0 (add1 n)))
@@ -111,9 +117,12 @@
   (syntax-parse stx
     #:datum-literals (logo-program)
     [(_ id args ... (logo-program commands ...))
-     #'(set! id
-             (lambda (args ...)
-               commands ...))]))
+     (if (identifier-binding #'id)
+         #'(set! id
+                 (lambda (args ...)
+                   commands ...))
+         #'(define id (lambda (args ...)
+                        commands ...)))]))
 
 (struct stop-signal (value))
 
@@ -128,16 +137,18 @@
     [(_ id args ...)
      #:with arity       (length (syntax->list #'(args ...)))
      #:with line-number (syntax-line #'id)
-     #`(cond [(= 'arity (procedure-arity id))
-              (with-handlers ([stop-signal? (lambda (sig)
-                                              (stop-signal-value sig))])
-                (id args ...))]
-             [else
-              (logo-error (format "Too ~a arguments given to ~a at line ~a."
-                                  (if (> 'arity (procedure-arity id))
-                                      "many"
-                                      "few")
-                                  'id 'line-number))])]))
+     (if (identifier-binding #'id)
+         #`(cond [(arity-includes? (procedure-arity id) 'arity)
+                  (with-handlers ([stop-signal? (lambda (sig)
+                                                  (stop-signal-value sig))])
+                    (id args ...))]
+                 [else
+                  (logo-error (format "Too ~a arguments given to ~a at line ~a."
+                                      (if (> 'arity (procedure-arity id))
+                                          "many"
+                                          "few")
+                                      'id 'line-number))])
+         #'(logo-error (format "I don't know how to ~a." 'id)))]))
 
 (define-syntax (logo-repeat stx)
   (syntax-parse stx
@@ -146,3 +157,9 @@
          (when (> i 0)
            statements ...
            (loop (- i 1))))]))
+
+(define-syntax (logo-program stx)
+  (syntax-parse stx
+    [(_ statements ...)
+     #'(begin
+         statements ...)]))
