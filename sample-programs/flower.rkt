@@ -1,0 +1,6 @@
+#lang logo
+to flower
+repeat 8 [rt 45 repeat 6 [repeat 90 [fd 1 rt 2] rt 90]]
+end
+
+flower
