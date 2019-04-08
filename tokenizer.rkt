@@ -5,11 +5,12 @@
 (require brag/support)
 
 (define-lex-abbrev reserved-terms (:or "forward" "back" "right" "left" "repeat" "[" "]"
-                                       "to" "end" "if" "+" "-" "/" "*" "!=" "="
+                                       "to" "end" "if" "+" "-" "/" "*" "!=" "=" "<=" ">="
                                        "<" ">" "(" ")" "stop" "output" "penup" "pendown"
                                        "print" "setposition" "setpos" "setxy"
                                        "random" "not" "clear" "home" "clearscreen"
-                                       "fd" "bk" "rt" "lt" "pd" "pu" "cs"))
+                                       "fd" "bk" "rt" "lt" "pd" "pu" "cs"
+                                       "setpencolor" "setpc" "setpenstyle" "setps"))
 (define-lex-abbrev digits (:+ (char-set "0123456789")))
 
 (define logo-lexer

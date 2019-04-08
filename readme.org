@@ -54,6 +54,8 @@ n = m
 n != m
 n < m
 n > m
+n <= m
+n >= m
 #+end_src
 and all of these can be prefaced with /not/ to change the value.
 
@@ -77,6 +79,12 @@ Like stop, but returns the value /n/.
 
 *** print /expression/
 Prints the result of the expression to the log.
+
+*** setpencolor /expression/, setpencolor [ /red green blue/ ], setpc /expression/, setpc [ /red green blue/ ]
+Sets the pen color to the value of expression, which should be a color-name, or to the color defined by the RGB-triple (/red/,/green/,/blue/),
+
+*** setpenstyle /expression/, setps /expression/
+Sets the style of the pen to /expression/, which should either be a string in the list \('solid' 'dot' 'long-dash' 'short-dash' 'dot-dash'\) or an index to the same list.
 
 ** Installation
 To use the program, clone the repository and install it as a package with raco. It should then be ready for use with #lang.

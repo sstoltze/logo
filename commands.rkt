@@ -1,9 +1,9 @@
 #lang racket/base
-(provide (all-defined-out))
 (require racket/gui
          racket/draw
          (for-syntax syntax/parse
                      racket/base))
+(provide (all-defined-out))
 
 (require "world.rkt")
 
@@ -101,6 +101,8 @@
     [("=") (= x y)]
     [("<") (< x y)]
     [(">") (> x y)]
+    [("<=") (<= x y)]
+    [(">=") (>= x y)]
     [("!=") (not (= x y))]))
 
 (define-syntax (logo-if stx)
@@ -131,6 +133,42 @@
 
 (define (logo-output x)
   (raise (stop-signal x)))
+
+(define (logo-set-pen-color r [g #f] [b #f])
+  (match-define (world _ canvas _) (current-world))
+  (define color (if g
+                    (make-color r g b)
+                    r))
+  (define old-pen (send canvas get-pen))
+  (define new-pen (send the-pen-list find-or-create-pen
+                        color
+                        (send old-pen get-width)
+                        (send old-pen get-style)
+                        (send old-pen get-cap)
+                        (send old-pen get-join)))
+  (send canvas set-pen new-pen))
+
+(define (logo-set-pen-style style)
+  (define style-list (list 'solid 'dot 'long-dash 'short-dash 'dot-dash))
+  (define new-style (cond [(and (number? style)
+                                (not (negative? style))
+                                (< style (length style-list)))
+                           (list-ref style-list style)]
+                          [(and (string? style)
+                                (member (string->symbol style) style-list))
+                           (string->symbol style)]
+                          [else (logo-error (format "Unknown style ~a" style))
+                                #f]))
+  (when new-style
+    (match-define (world _ canvas _) (current-world))
+    (define old-pen (send canvas get-pen))
+    (define new-pen (send the-pen-list find-or-create-pen
+                          (send old-pen get-color)
+                          (send old-pen get-width)
+                          new-style
+                          (send old-pen get-cap)
+                          (send old-pen get-join)))
+    (send canvas set-pen new-pen)))
 
 (define-syntax (logo-command stx)
   (syntax-parse stx

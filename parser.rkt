@@ -2,9 +2,11 @@
 
 logo-program    : [logo-line] ((/NEWLINE)* [logo-line])*
 @logo-line      : logo-statement
-@logo-statement : logo-forward | logo-right | logo-left | logo-repeat | logo-to | logo-if
-                | logo-stop | logo-output | logo-pen-up | logo-pen-down | logo-print | logo-back
-                | logo-set-position | logo-random
+@logo-statement : logo-forward | logo-back | logo-right | logo-left
+                | logo-repeat | logo-to | logo-if | logo-stop
+                | logo-output | logo-pen-up | logo-pen-down | logo-clear
+                | logo-home | logo-print | logo-random
+                | logo-set-position | logo-set-pen-color | logo-set-pen-style
                 | logo-command
 logo-forward    : /("forward"|"fd") logo-expr
 logo-back       : /("back"|"bk")    logo-expr
@@ -20,11 +22,14 @@ logo-pen-down   : /("pendown"|"pd")
 logo-clear      : /("clear"|"clearscreen"|"cs")
 logo-home       : /"home"
 logo-print      : /"print" logo-expr
-logo-set-position : /("setposition"|"setpos"|"setxy") logo-expr logo-expr
 logo-random     : /"random" logo-expr
+logo-set-position  : /("setposition"|"setpos"|"setxy") logo-expr logo-expr
+logo-set-pen-color : /("setpencolor"|"setpc") ((/"[" logo-expr logo-expr logo-expr /"]")
+                                               | logo-string)
+logo-set-pen-style : /("setpenstyle"|"setps") logo-expr
 logo-command    : logo-id ([logo-expr])*
 logo-not        : ["not"] logo-cond
-logo-cond       : logo-expr ("="|"<"|">"|"!=") logo-expr
+logo-cond       : logo-expr ("="|"<"|">"|"!="|"<="|">=") logo-expr
 logo-expr       : logo-sum
 logo-sum        : [logo-sum ("+"|"-")] logo-product
 logo-product    : [logo-product ("*"|"/")] logo-negative
