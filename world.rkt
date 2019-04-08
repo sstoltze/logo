@@ -1,19 +1,22 @@
 #lang racket/base
-(provide new-world
-         scale-to-width
-         scale-to-height
-         turtle-starting-position
-         world-max-height
-         world-max-width
-         (struct-out turtle)
-         (struct-out world)
-         current-world)
-
-(require "reader.rkt"
-         (except-in racket/gui
-                    read-syntax
-                    read)
+(require (only-in "reader.rkt" parse-logo)
+         racket/contract
+         racket/gui
          racket/draw)
+(provide (contract-out [scale-to-width   (-> world-size? world-size?)]
+                       [scale-to-height  (-> world-size? world-size?)]
+                       [world-max-width  (-> world-size?)]
+                       [world-max-height (-> world-size?)]
+                       [struct turtle    [(x        world-size?)
+                                          (y        world-size?)
+                                          (ang      number?)
+                                          (pen-down boolean?)]]
+                       [struct world     [(turt           turtle?)
+                                          (drawing-canvas (is-a?/c dc<%>))
+                                          (output-text    (is-a?/c text%))]]
+                       [current-world    (parameter/c (or/c #f world?))]
+                       [new-world        (-> world?)]
+                       [turtle-starting-position (-> (values world-size? world-size? number?))]))
 
 (define *width*  800)
 (define *height* 800)
@@ -23,13 +26,29 @@
 
 (define current-world (make-parameter #f))
 
+(define (world-size? s)
+  (and (number? s) (positive? s)))
+
+(define (scale-to-width x)
+  (min (max x 0) *width*))
+(define (scale-to-height y)
+  (min (max y 0) *height*))
+(define (world-max-width)
+  *width*)
+(define (world-max-height)
+  *height*)
+(define (turtle-starting-position)
+  (define starting-x-position (/ (world-max-width)  2))
+  (define starting-y-position (/ (world-max-height) 2))
+  (define starting-angle-in-degrees 0)
+  (values starting-x-position starting-y-position starting-angle-in-degrees))
+
 (define (new-world)
   ;; Button callbacks
   (define (submit-program button event)
     ;; Get input
     (define program (send input get-text))
     (define code    (parse-logo (open-input-string program)))
-    (send input erase)
     ;; Submit program to log with color
     (define style-delta (make-object style-delta%
                                      'change-normal-color))
@@ -46,11 +65,11 @@
     (define-values (starting-x starting-y starting-angle) (turtle-starting-position))
     (set-turtle-x!   turt starting-x)
     (set-turtle-y!   turt starting-y)
-    (set-turtle-ang! turt starting-angle))
+    (set-turtle-ang! turt (degrees->radians starting-angle)))
 
   ;; Turtle
   (define-values (starting-x starting-y starting-angle) (turtle-starting-position))
-  (define turt (turtle starting-x starting-y starting-angle #t))
+  (define turt   (turtle starting-x starting-y starting-angle #t))
 
   ;; GUI
   (define frame         (new frame%
@@ -66,11 +85,9 @@
   (define pen           (new pen%))
   (send dc set-pen pen)
   (send frame show #t)
-
   ;; Bottom area
   (define hp            (new horizontal-pane%
                              [parent vp]))
-
   ;; Input
   (define input-v       (new vertical-pane%
                              [parent hp]))
@@ -112,7 +129,6 @@
                              [parent button-h]
                              [label "Submit"]
                              [callback submit-program]))
-
   ;; Log
   (define output-v      (new vertical-pane%
                              [parent hp]
@@ -126,16 +142,3 @@
                              [editor output]
                              [min-height (inexact->exact (* 0.2 *height*))]))
   (world turt dc output))
-
-(define (scale-to-width x)
-  (min (max x 0) *width*))
-(define (scale-to-height y)
-  (min (max y 0) *height*))
-(define (world-max-width)
-  *width*)
-(define (world-max-height)
-  *height*)
-(define (turtle-starting-position)
-  (values (/ (world-max-width)  2)
-          (/ (world-max-height) 2)
-          0))
