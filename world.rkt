@@ -89,17 +89,15 @@
   (define hp            (new horizontal-pane%
                              [parent vp]))
   ;; Input
+  (define input-box     (new group-box-panel%
+                             [parent hp]
+                             [label "Input"]
+                             [min-width (inexact->exact (* 0.5 *width*))]))
   (define input-v       (new vertical-pane%
-                             [parent hp]))
+                             [parent input-box]))
   (define input-h       (new horizontal-pane%
                              [parent input-v]
                              [alignment '(left center)]))
-  (define label-h       (new horizontal-pane%
-                             [parent input-h]
-                             [alignment '(left center)]))
-  (define input-label   (new message%
-                             [parent label-h]
-                             [label "Input"]))
   (define input         (new text%))
   (define input-canvas  (new editor-canvas%
                              [parent input-v]
@@ -130,15 +128,13 @@
                              [label "Submit"]
                              [callback submit-program]))
   ;; Log
-  (define output-v      (new vertical-pane%
+  (define output-box    (new group-box-panel%
                              [parent hp]
-                             [alignment  '(left center)]))
-  (define output-label  (new message%
-                             [parent output-v]
-                             [label "Log"]))
+                             [label "Log"]
+                             [min-width (inexact->exact (* 0.5 *width*))]))
   (define output        (new text%))
   (define output-canvas (new editor-canvas%
-                             [parent output-v]
+                             [parent output-box]
                              [editor output]
                              [min-height (inexact->exact (* 0.2 *height*))]))
   (world turt dc output))

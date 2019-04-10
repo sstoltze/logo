@@ -157,7 +157,7 @@
                           [(and (string? style)
                                 (member (string->symbol style) style-list))
                            (string->symbol style)]
-                          [else (logo-error (format "Unknown style ~a" style))
+                          [else (logo-error (format "Unknown style '~a'. Known styles are 'solid', 'dot', 'long-dash', 'short-dash' and 'dot-dash'." style))
                                 #f]))
   (when new-style
     (match-define (world _ canvas _) (current-world))
