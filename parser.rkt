@@ -5,7 +5,7 @@ logo-program    : [logo-line] ((/NEWLINE)* [logo-line])*
 @logo-statement : logo-forward | logo-back | logo-right | logo-left
                 | logo-repeat | logo-to | logo-if | logo-stop
                 | logo-output | logo-pen-up | logo-pen-down | logo-clear
-                | logo-home | logo-print | logo-random
+                | logo-home | logo-print | logo-random | logo-comment
                 | logo-set-position | logo-set-pen-color | logo-set-pen-style
                 | logo-command
 logo-forward    : /("forward"|"fd") logo-expr
@@ -40,3 +40,4 @@ logo-negative   : ["-"] logo-var
 @logo-argument  : ARGUMENT
 @logo-id        : ID
 @logo-int       : INTEGER
+logo-comment    : COMMENT

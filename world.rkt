@@ -66,6 +66,12 @@
     (set-turtle-x!   turt starting-x)
     (set-turtle-y!   turt starting-y)
     (set-turtle-ang! turt (degrees->radians starting-angle)))
+  (define (save-file i event)
+    (send input save-file #f 'text))
+  (define (open-file i event)
+    (define path (get-file #f frame))
+    (when path
+      (send input load-file path 'text)))
 
   ;; Turtle
   (define-values (starting-x starting-y starting-angle) (turtle-starting-position))
@@ -73,14 +79,45 @@
 
   ;; GUI
   (define frame         (new frame%
-                             [label "Logo"]
+                             [label  "Logo"]
                              [height (inexact->exact (* 1.2 *height*))]
                              [width  *width*]))
+  ;; Menu-bar
+  (define mb            (new menu-bar%
+                             [parent frame]))
+  (define m-file        (new menu%
+                             [label "File"]
+                             [parent mb]))
+  (define m-edit        (new menu%
+                             [label "Edit"]
+                             [parent mb]))
+  (define m-font        (new menu%
+                             [label "Font"]
+                             [parent mb]))
+  (define mi-open       (new menu-item%
+                             [label "Open"]
+                             [parent m-file]
+                             [callback open-file]
+                             [shortcut #\o]
+                             [shortcut-prefix '(ctl)]))
+  (define mi-save       (new menu-item%
+                             [label "Save"]
+                             [parent m-file]
+                             [callback save-file]
+                             [shortcut #\s]
+                             [shortcut-prefix '(ctl)]))
+  (append-editor-operation-menu-items m-edit #f)
+  (append-editor-font-menu-items m-font)
+  ;; Main window
   (define vp            (new vertical-pane%
                              [parent frame]))
+  ;; Drawing area
   (define canvas        (new canvas%
-                             [parent vp]
-                             [min-height *height*]))
+                             [parent             vp]
+                             [min-width          *width*]
+                             [min-height         *height*]
+                             [stretchable-width  #f]
+                             [stretchable-height #f]))
   (define dc            (send canvas get-dc))
   (define pen           (new pen%))
   (send dc set-pen pen)
@@ -90,9 +127,9 @@
                              [parent vp]))
   ;; Input
   (define input-box     (new group-box-panel%
-                             [parent hp]
-                             [label "Input"]
-                             [min-width (inexact->exact (* 0.5 *width*))]))
+                             [parent    hp]
+                             [label     "Input"]
+                             [min-width (scale *width* 0.5)]))
   (define input-v       (new vertical-pane%
                              [parent input-box]))
   (define input-h       (new horizontal-pane%
@@ -102,7 +139,8 @@
   (define input-canvas  (new editor-canvas%
                              [parent input-v]
                              [editor input]
-                             [min-height (inexact->exact (* 0.2 *height*))]))
+                             [min-height (scale *height* 0.2)]))
+  (send input set-max-undo-history 100)
   ;; Button-row
   (define button-h      (new horizontal-pane%
                              [parent input-v]))
@@ -131,10 +169,13 @@
   (define output-box    (new group-box-panel%
                              [parent hp]
                              [label "Log"]
-                             [min-width (inexact->exact (* 0.5 *width*))]))
+                             [min-width (scale *width* 0.5)]))
   (define output        (new text%))
   (define output-canvas (new editor-canvas%
                              [parent output-box]
                              [editor output]
-                             [min-height (inexact->exact (* 0.2 *height*))]))
+                             [min-height (scale *height* 0.2)]))
   (world turt dc output))
+
+(define (scale size ratio)
+  (inexact->exact (* ratio size)))

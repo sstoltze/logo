@@ -17,6 +17,7 @@
   (lexer-srcloc
    ["\n" (token 'NEWLINE lexeme)]
    [whitespace (token lexeme #:skip? #t)]
+   [(from/stop-before "#" "\n") (token 'COMMENT lexeme)]
    [reserved-terms (token lexeme lexeme)]
    [digits (token 'INTEGER (string->number lexeme))]
    [(:+ alphabetic) (token 'ID (string->symbol lexeme))]

@@ -91,6 +91,7 @@ To use the program, clone the repository and install it as a package with raco. 
 
 ** Notes
 This package currently supports a small subset of the logo programming language.
+Comments start with # and run to the end of the line.
 Currently, integers and strings are the only working data types. There are no floats. Strings can be written both as "string1" and 'string2'. Both () and [] can be used as parentheses.
 
 ** Sample programs
@@ -156,6 +157,8 @@ forward factorial 10
 
 ** Todo
 Implement error messages when parsing fails.
+
+Automatically put the file in the input area when running from a .rkt file.
 
 Add support for statements that are just values, for ease of use.
 

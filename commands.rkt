@@ -188,6 +188,9 @@
                                       'id 'line-number))])
          #'(logo-error (format "I don't know how to ~a." 'id)))]))
 
+(define (logo-comment com)
+  (void))
+
 (define-syntax (logo-repeat stx)
   (syntax-parse stx
     [(_ n statements ...)
