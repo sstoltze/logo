@@ -12,7 +12,7 @@
 
 (define-syntax (logo-module-begin stx)
   (syntax-parse stx
-    [(_ (logo-program statements ...))
+    [(_ source (logo-program statements ...))
      #:with (id ...) (find-property 'logo-id #'(statements ...))
      #'(#%module-begin
         (module configure-runtime racket/base
@@ -20,7 +20,7 @@
           (current-read-interaction read-syntax))
         (define id
           (lambda args (logo-error (format "I don't know how to ~a." 'id)))) ...
-        (current-world (new-world))
+        (current-world (new-world source))
         (sleep/yield 1)
         statements ...)]))
 

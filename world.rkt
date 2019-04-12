@@ -15,7 +15,7 @@
                                           (drawing-canvas (is-a?/c dc<%>))
                                           (output-text    (is-a?/c text%))]]
                        [current-world    (parameter/c (or/c #f world?))]
-                       [new-world        (-> world?)]
+                       [new-world        (->* () ((or/c #f path?)) world?)]
                        [turtle-starting-position (-> (values world-size? world-size? number?))]))
 
 (define *width*  800)
@@ -43,7 +43,7 @@
   (define starting-angle-in-degrees 0)
   (values starting-x-position starting-y-position starting-angle-in-degrees))
 
-(define (new-world)
+(define (new-world [source-file #f])
   ;; Button callbacks
   (define (submit-program button event)
     ;; Get input
@@ -67,8 +67,10 @@
     (set-turtle-y!   turt starting-y)
     (set-turtle-ang! turt (degrees->radians starting-angle)))
   (define (save-file i event)
+    ;; Append '#lang logo' if not already there?
     (send input save-file #f 'text))
   (define (open-file i event)
+    ;; Remove '#lang logo' if first line?
     (define path (get-file #f frame))
     (when path
       (send input load-file path 'text)))
@@ -141,6 +143,9 @@
                              [editor input]
                              [min-height (scale *height* 0.2)]))
   (send input set-max-undo-history 100)
+  (when source-file
+    ;; Remove '#lang logo' if first line?
+    (send input load-file source-file 'text))
   ;; Button-row
   (define button-h      (new horizontal-pane%
                              [parent input-v]))

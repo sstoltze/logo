@@ -8,6 +8,7 @@
   (define parse-tree (parse path (make-tokenizer port path)))
   (strip-context
    #`(module logo-module logo/expander
+       #,path
        #,parse-tree)))
 
 (define (parse-logo port)
