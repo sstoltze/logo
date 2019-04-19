@@ -3,8 +3,8 @@
          racket/contract
          racket/gui
          racket/draw)
-(provide (contract-out [scale-to-width   (-> world-size? world-size?)]
-                       [scale-to-height  (-> world-size? world-size?)]
+(provide (contract-out [scale-to-width   (-> number? world-size?)]
+                       [scale-to-height  (-> number? world-size?)]
                        [world-max-width  (-> world-size?)]
                        [world-max-height (-> world-size?)]
                        [struct turtle    [(x        world-size?)
@@ -27,7 +27,7 @@
 (define current-world (make-parameter #f))
 
 (define (world-size? s)
-  (and (number? s) (positive? s)))
+  (and (number? s) (>=/c 0)))
 
 (define (scale-to-width x)
   (min (max x 0) *width*))
@@ -54,6 +54,7 @@
                                      'change-normal-color))
     (send style-delta set-delta-foreground "blue")
     (send output change-style style-delta)
+    (send output move-position 'end)
     (send output insert (format "~a~%" program))
     (send style-delta set-delta-foreground "black")
     (send output change-style style-delta)
@@ -175,7 +176,7 @@
                              [parent hp]
                              [label "Log"]
                              [min-width (scale *width* 0.5)]))
-  (define output        (new text%))
+  (define output        (new append-only-text%))
   (define output-canvas (new editor-canvas%
                              [parent output-box]
                              [editor output]
@@ -184,3 +185,10 @@
 
 (define (scale size ratio)
   (inexact->exact (* ratio size)))
+
+(define append-only-text%
+  (class text%
+    (inherit last-position)
+    (define/augment (can-insert? s l) (= s (last-position)))
+    (define/augment (can-delete? s l) #f)
+    (super-new)))
