@@ -1,5 +1,6 @@
 #lang racket/base
-(require (only-in "reader.rkt" parse-logo)
+(require (for-syntax syntax/parse)
+         (only-in "reader.rkt" parse-logo)
          racket/contract
          racket/gui
          racket/draw)
@@ -9,22 +10,94 @@
                        [world-max-height (-> world-size?)]
                        [struct turtle    [(x        world-size?)
                                           (y        world-size?)
-                                          (ang      number?)
+                                          (angle    number?)
                                           (pen-down boolean?)]]
-                       [struct world     [(turt           turtle?)
-                                          (drawing-canvas (is-a?/c dc<%>))
-                                          (output-text    (is-a?/c text%))]]
+                       [struct world     [(turtle          turtle?)
+                                          (drawing-context (is-a?/c bitmap-dc%))
+                                          (output-text     (is-a?/c text%))]]
                        [current-world    (parameter/c (or/c #f world?))]
                        [new-world        (->* () ((or/c #f path?)) world?)]
-                       [turtle-starting-position (-> (values world-size? world-size? number?))]))
+                       [turtle-starting-position (-> (values world-size? world-size? number?))])
+         define/logo lambda/logo ;; Contract?
+         save-logo-state draw-logo-canvas restore-logo-state logo-undo) ;; Add contracts
 
 (define *width*  800)
 (define *height* 800)
 
-(struct turtle (x y ang pen-down) #:mutable)
-(struct world  (turt drawing-canvas output-text))
+(struct turtle (x y angle pen-down) #:mutable)
+(struct world  (turtle drawing-context output-text) #:mutable)
 
-(define current-world (make-parameter #f))
+(define current-world        (make-parameter #f))
+(define current-world-canvas #f)
+(define current-undo-list    empty)
+
+(define-syntax (lambda/logo stx)
+  (syntax-parse stx
+    [(_ (define-id ...) statement ... last-statement)
+     #'(lambda (define-id ...)
+           statement ...
+           (define result last-statement)
+           (save-logo-state)
+           (draw-logo-canvas)
+           result)]))
+
+(define-syntax (define/logo stx)
+  (syntax-parse stx
+    [(_ (define-id arg ...) statement ... )
+     #'(define define-id (lambda/logo (arg ...) statement ...))]))
+
+;; state is turtle, pen, bitmap
+(define (save-logo-state)
+  (match-define (world turt context _) (current-world))
+  (set! current-undo-list (cons (list (struct-copy turtle turt)
+                                      (send context get-pen)
+                                      (bitmap-context->bytes context))
+                                current-undo-list)))
+(define/logo (restore-logo-state turtle pen bitmap)
+  (match-define (world _ context _) (current-world))
+  (restore-turtle turtle)
+  (send context set-pen pen)
+  (define input-port  (open-input-bytes bitmap))
+  (define new-bitmap  (read-bitmap input-port 'png))
+  (define new-context (send new-bitmap make-dc))
+  (set-world-drawing-context! new-context))
+(define (bitmap-context->bytes bc)
+  (define bitmap (send bc get-bitmap))
+  (define output-port (open-output-bytes))
+  (send bitmap save-file output-port 'png)
+  (close-output-port output-port)
+  (get-output-bytes output-port))
+(define (restore-turtle turtle)
+  (set-world-turtle! turtle)
+  ;; (match-define (turtle new-x new-y new-angle pen-down) turt)
+  ;; (define t (world-turtle (current-world)))
+  ;; (set-turtle-x!        t new-x)
+  ;; (set-turtle-y!        t new-y)
+  ;; (set-turtle-angle!    t new-angle)
+  ;; (set-turtle-pen-down! t pen-down)
+  )
+(define (logo-undo)
+  (void))
+(define (reset-logo-state turt pen bc dc)
+  (set! current-undo-list (list
+                           (list (struct-copy turtle turt)
+                                 pen
+                                 (bitmap-context->bytes bc))))
+  (set! current-world-canvas dc))
+;; Also draw turtle
+(define (draw-logo-canvas)
+  (define bitmap-context (world-drawing-context (current-world)))
+  (define bitmap (send bitmap-context get-bitmap))
+  (send current-world-canvas clear)
+  (send current-world-canvas draw-bitmap bitmap 0 0)
+  ;; Draw turtle ...
+  )
+
+;; (define o (open-output-bytes))
+;; (send bitmap save-file o 'png)
+;; (close-output-port o)
+;; (define l (read-bitmap (open-input-bytes (get-output-bytes o)) 'png))
+
 
 (define (world-size? s)
   (and (number? s) (>=/c 0)))
@@ -43,6 +116,7 @@
   (define starting-angle-in-degrees 0)
   (values starting-x-position starting-y-position starting-angle-in-degrees))
 
+;; Setup current-world-canvas and current-undo-list
 (define (new-world [source-file #f])
   ;; Button callbacks
   (define (submit-program button event)
@@ -64,9 +138,9 @@
     (send dc erase))
   (define (reset-turtle button event)
     (define-values (starting-x starting-y starting-angle) (turtle-starting-position))
-    (set-turtle-x!   turt starting-x)
-    (set-turtle-y!   turt starting-y)
-    (set-turtle-ang! turt (degrees->radians starting-angle)))
+    (set-turtle-x!     turt starting-x)
+    (set-turtle-y!     turt starting-y)
+    (set-turtle-angle! turt (degrees->radians starting-angle)))
   (define (save-file i event)
     ;; Append '#lang logo' if not already there?
     (send input save-file #f 'text))
@@ -122,8 +196,10 @@
                              [stretchable-width  #f]
                              [stretchable-height #f]))
   (define dc            (send canvas get-dc))
+  (define b             (make-bitmap *width* *height*))
+  (define bc            (send b make-dc))
   (define pen           (new pen%))
-  (send dc set-pen pen)
+  (send bc set-pen pen)
   (send frame show #t)
   ;; Bottom area
   (define hp            (new horizontal-pane%
@@ -181,7 +257,8 @@
                              [parent output-box]
                              [editor output]
                              [min-height (scale *height* 0.2)]))
-  (world turt dc output))
+  (reset-logo-state turt pen bc dc)
+  (world turt bc output))
 
 (define (scale size ratio)
   (inexact->exact (* ratio size)))
