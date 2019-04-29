@@ -22,7 +22,8 @@
           (lambda args (logo-error (format "I don't know how to ~a." 'id)))) ...
         (current-world (new-world source))
         (sleep/yield 1)
-        statements ...)]))
+        (logo-program
+         statements ...))]))
 
 (begin-for-syntax
   (define (syntax-flatten stx)

@@ -7,7 +7,7 @@
 
 (require "world.rkt")
 
-(define/logo (logo-set-position x y)
+(define (logo-set-position x y)
   (match-define (world turt canvas _) (current-world))
   (match-define (turtle old-x old-y ang pen-down) turt)
   (set-turtle-x! turt (scale-to-width  x))
@@ -15,47 +15,47 @@
   (when pen-down
     (send canvas draw-line old-x old-y x y)))
 
-(define/logo (logo-set-angle deg)
+(define (logo-set-angle deg)
   (match-define (world turt _ _) (current-world))
   (define rads (degrees->radians deg))
   (set-turtle-angle! turt rads))
 
-(define/logo (logo-forward n)
+(define (logo-forward n)
   (match-define (world turt _ _) (current-world))
   (match-define (turtle old-x old-y ang pen-down) turt)
   (define new-x (scale-to-width  (+ old-x (* (cos ang) n))))
   (define new-y (scale-to-height (+ old-y (* (sin ang) n))))
   (logo-set-position new-x new-y))
 
-(define/logo (logo-back n)
+(define (logo-back n)
   (logo-forward (- n)))
 
-(define/logo (logo-right deg)
+(define (logo-right deg)
   (match-define (world turt _ _) (current-world))
   (define rads (degrees->radians deg))
   (set-turtle-angle! turt (+ (turtle-angle turt) rads)))
 
-(define/logo (logo-left deg)
+(define (logo-left deg)
   (logo-right (- deg)))
 
-(define/logo (logo-pen-up)
+(define (logo-pen-up)
   (match-define (world turt _ _) (current-world))
   (set-turtle-pen-down! turt #f))
 
-(define/logo (logo-pen-down)
+(define (logo-pen-down)
   (match-define (world turt _ _) (current-world))
   (set-turtle-pen-down! turt #t))
 
-(define/logo (logo-clear)
+(define (logo-clear)
   (match-define (world _ canvas _) (current-world))
   (send canvas clear))
 
-(define/logo (logo-home)
+(define (logo-home)
   (define-values (starting-x starting-y starting-angle) (turtle-starting-position))
   (logo-set-position starting-x starting-y)
   (logo-set-angle starting-angle))
 
-(define/logo (logo-print output [color "black"])
+(define (logo-print output [color "black"])
   (match-define (world _ _ text) (current-world))
   (define style-delta (make-object style-delta%
                                    'change-normal-color))
@@ -65,38 +65,38 @@
   (send style-delta set-delta-foreground "black")
   (send text change-style style-delta))
 
-(define/logo (logo-error output)
+(define (logo-error output)
   (logo-print (format "Error: ~a" output) "red"))
 
-(define/logo (logo-random n)
+(define (logo-random n)
   (random 0 (add1 n)))
 
-(define/logo (logo-expr x)
+(define (logo-expr x)
   x)
 
-(define/logo (logo-sum n [op #f] [m #f])
+(define (logo-sum n [op #f] [m #f])
   (case op
     [("+") (+ n m)]
     [("-") (- n m)]
     [else n]))
 
-(define/logo (logo-negative n [m #f])
+(define (logo-negative n [m #f])
   (case n
     [("-") (- m)]
     [else n]))
 
-(define/logo (logo-product n [op #f] [m #f])
+(define (logo-product n [op #f] [m #f])
   (case op
     [("*") (* n m)]
     [("/") (/ n m)]
     [else n]))
 
-(define/logo (logo-not x [y #f])
+(define (logo-not x [y #f])
   (case x
     [("not") (not y)]
     [else x]))
 
-(define/logo (logo-cond x op y)
+(define (logo-cond x op y)
   (case op
     [("=") (= x y)]
     [("<") (< x y)]
@@ -121,20 +121,20 @@
     [(_ id args ... (logo-program commands ...))
      (if (identifier-binding #'id)
          #'(set! id
-                 (lambda/logo (args ...)
+                 (lambda (args ...)
                    commands ...))
-         #'(define id (lambda/logo (args ...)
+         #'(define id (lambda (args ...)
                         commands ...)))]))
 
 (struct stop-signal (value))
 
-(define/logo (logo-stop)
+(define (logo-stop)
   (raise (stop-signal (void))))
 
-(define/logo (logo-output x)
+(define (logo-output x)
   (raise (stop-signal x)))
 
-(define/logo (logo-set-pen-color r [g #f] [b #f])
+(define (logo-set-pen-color r [g #f] [b #f])
   (match-define (world _ canvas _) (current-world))
   (define color (if g
                     (make-color r g b)
@@ -148,7 +148,7 @@
                         (send old-pen get-join)))
   (send canvas set-pen new-pen))
 
-(define/logo (logo-set-pen-style style)
+(define (logo-set-pen-style style)
   (define style-list (list 'solid 'dot 'long-dash 'short-dash 'dot-dash))
   (define new-style (cond [(and (number? style)
                                 (not (negative? style))
@@ -188,7 +188,7 @@
                                       'id 'line-number))])
          #'(logo-error (format "I don't know how to ~a." 'id)))]))
 
-(define/logo (logo-comment com)
+(define (logo-comment com)
   (void))
 
 (define-syntax (logo-repeat stx)
@@ -201,6 +201,10 @@
 
 (define-syntax (logo-program stx)
   (syntax-parse stx
-    [(_ statements ...)
+    [(_ statements ... last-statement)
      #'(begin
-         statements ...)]))
+         statements ...
+         (define result last-statement)
+         (save-logo-state)
+         (draw-logo-canvas)
+         result)]))
