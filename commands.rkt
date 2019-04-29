@@ -91,6 +91,11 @@
     [("/") (/ n m)]
     [else n]))
 
+(define (logo-max-width)
+  (world-max-width))
+(define (logo-max-height)
+  (world-max-height))
+
 (define (logo-not x [y #f])
   (case x
     [("not") (not y)]

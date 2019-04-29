@@ -9,7 +9,7 @@ repeat 36 [right 10 square :size]
 end
 
 to garden :number :size
-repeat :number [penup setposition random 1000 random 1000 pendown flower :size]
+repeat :number [penup setposition random maxwidth random maxheight pendown flower :size]
 end
 
 garden 20 50

@@ -7,6 +7,7 @@ logo-program    : [logo-line] ((/NEWLINE)* [logo-line])*
                 | logo-output | logo-pen-up | logo-pen-down | logo-clear
                 | logo-home | logo-print | logo-random | logo-comment
                 | logo-set-position | logo-set-pen-color | logo-set-pen-style
+                | logo-max-width | logo-max-height
                 | logo-command
 logo-forward    : /("forward"|"fd") logo-expr
 logo-back       : /("back"|"bk")    logo-expr
@@ -23,6 +24,8 @@ logo-clear      : /("clear"|"clearscreen"|"cs")
 logo-home       : /"home"
 logo-print      : /"print" logo-expr
 logo-random     : /"random" logo-expr
+logo-max-width  : /"maxwidth"
+logo-max-height : /"maxheight"
 logo-set-position  : /("setposition"|"setpos"|"setxy") logo-expr logo-expr
 logo-set-pen-color : /("setpencolor"|"setpc") ((/"[" logo-expr logo-expr logo-expr /"]")
                                                | logo-string)

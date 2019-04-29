@@ -9,7 +9,7 @@
                                        "<" ">" "(" ")" "stop" "output" "penup" "pendown"
                                        "print" "setposition" "setpos" "setxy"
                                        "random" "not" "clear" "home" "clearscreen"
-                                       "fd" "bk" "rt" "lt" "pd" "pu" "cs"
+                                       "fd" "bk" "rt" "lt" "pd" "pu" "cs" "maxwidth" "maxheight"
                                        "setpencolor" "setpc" "setpenstyle" "setps"))
 (define-lex-abbrev digits (:+ (char-set "0123456789")))
 
