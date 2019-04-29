@@ -142,6 +142,7 @@
     ;; Run program
     (eval code))
   (define (clear-screen button event)
+    (send bc erase)
     (send dc erase))
   (define (reset-turtle button event)
     (define-values (starting-x starting-y starting-angle) (turtle-starting-position))
