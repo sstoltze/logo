@@ -8,12 +8,12 @@
 (require "world.rkt")
 
 (define (logo-set-position x y)
-  (match-define (world turt canvas _) (current-world))
+  (match-define (world turt context _) (current-world))
   (match-define (turtle old-x old-y ang pen-down) turt)
   (set-turtle-x! turt (scale-to-width  x))
   (set-turtle-y! turt (scale-to-height y))
   (when pen-down
-    (send canvas draw-line old-x old-y x y)))
+    (send context draw-line old-x old-y x y)))
 
 (define (logo-set-angle deg)
   (match-define (world turt _ _) (current-world))
@@ -47,8 +47,8 @@
   (set-turtle-pen-down! turt #t))
 
 (define (logo-clear)
-  (match-define (world _ canvas _) (current-world))
-  (send canvas clear))
+  (match-define (world _ context _) (current-world))
+  (send context clear))
 
 (define (logo-home)
   (define-values (starting-x starting-y starting-angle) (turtle-starting-position))
@@ -135,18 +135,18 @@
   (raise (stop-signal x)))
 
 (define (logo-set-pen-color r [g #f] [b #f])
-  (match-define (world _ canvas _) (current-world))
+  (match-define (world _ context _) (current-world))
   (define color (if g
                     (make-color r g b)
                     r))
-  (define old-pen (send canvas get-pen))
+  (define old-pen (send context get-pen))
   (define new-pen (send the-pen-list find-or-create-pen
                         color
                         (send old-pen get-width)
                         (send old-pen get-style)
                         (send old-pen get-cap)
                         (send old-pen get-join)))
-  (send canvas set-pen new-pen))
+  (send context set-pen new-pen))
 
 (define (logo-set-pen-style style)
   (define style-list (list 'solid 'dot 'long-dash 'short-dash 'dot-dash))
@@ -160,15 +160,15 @@
                           [else (logo-error (format "Unknown style '~a'. Known styles are 'solid', 'dot', 'long-dash', 'short-dash' and 'dot-dash'." style))
                                 #f]))
   (when new-style
-    (match-define (world _ canvas _) (current-world))
-    (define old-pen (send canvas get-pen))
+    (match-define (world _ context _) (current-world))
+    (define old-pen (send context get-pen))
     (define new-pen (send the-pen-list find-or-create-pen
                           (send old-pen get-color)
                           (send old-pen get-width)
                           new-style
                           (send old-pen get-cap)
                           (send old-pen get-join)))
-    (send canvas set-pen new-pen)))
+    (send context set-pen new-pen)))
 
 (define-syntax (logo-command stx)
   (syntax-parse stx
@@ -207,4 +207,5 @@
          (define result last-statement)
          (save-logo-state)
          (draw-logo-canvas)
-         result)]))
+         result)]
+    [(_) #'(void)]))

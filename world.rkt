@@ -17,9 +17,12 @@
                                           (output-text     (is-a?/c text%))]]
                        [current-world    (parameter/c (or/c #f world?))]
                        [new-world        (->* () ((or/c #f path?)) world?)]
-                       [turtle-starting-position (-> (values world-size? world-size? number?))])
+                       [turtle-starting-position (-> (values world-size? world-size? number?))]
+                       [save-logo-state  (-> void?)]
+                       [logo-undo        (-> boolean?)]
+                       [draw-logo-canvas (-> boolean?)])
          define/logo lambda/logo ;; Contract?
-         save-logo-state draw-logo-canvas restore-logo-state logo-undo) ;; Add contracts
+         )
 
 (define *width*  800)
 (define *height* 800)
@@ -70,14 +73,7 @@
   (close-output-port output-port)
   (get-output-bytes output-port))
 (define (restore-turtle turtle)
-  (set-world-turtle! (current-world) turtle)
-  ;; (match-define (turtle new-x new-y new-angle pen-down) turt)
-  ;; (define t (world-turtle (current-world)))
-  ;; (set-turtle-x!        t new-x)
-  ;; (set-turtle-y!        t new-y)
-  ;; (set-turtle-angle!    t new-angle)
-  ;; (set-turtle-pen-down! t pen-down)
-  )
+  (set-world-turtle! (current-world) turtle))
 (define (logo-undo)
   (unless (or (empty? current-undo-list)
               (empty? (rest current-undo-list)))
@@ -91,7 +87,6 @@
                                  pen
                                  (bitmap-context->bytes bc))))
   (set! current-world-canvas dc))
-;; Also draw turtle
 (define (draw-logo-canvas)
   (define bitmap-context (world-drawing-context (current-world)))
   (define bitmap (send bitmap-context get-bitmap))
@@ -99,12 +94,6 @@
   (send current-world-canvas draw-bitmap bitmap 0 0)
   ;; Draw turtle ...
   )
-
-;; (define o (open-output-bytes))
-;; (send bitmap save-file o 'png)
-;; (close-output-port o)
-;; (define l (read-bitmap (open-input-bytes (get-output-bytes o)) 'png))
-
 
 (define (world-size? s)
   (and (number? s) (>=/c 0)))
