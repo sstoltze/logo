@@ -1,6 +1,7 @@
 #lang racket/base
 (require (for-syntax syntax/parse)
          (only-in "reader.rkt" parse-logo)
+         brag/support
          racket/contract
          racket/gui
          racket/draw)
@@ -116,20 +117,30 @@
 (define (new-world [source-file #f])
   ;; Button callbacks
   (define (submit-program button event)
+    (define (print-with-colour colour item)
+      (define style-delta (make-object style-delta%
+                                       'change-normal-color))
+      (send style-delta set-delta-foreground colour)
+      (send output change-style style-delta)
+      (send output move-position 'end)
+      (send output insert (format "~a~%" item))
+      (send style-delta set-delta-foreground "black")
+      (send output change-style style-delta))
     ;; Get input
     (define program (send input get-text))
-    (define code    (parse-logo (open-input-string program)))
-    ;; Submit program to log with color
-    (define style-delta (make-object style-delta%
-                                     'change-normal-color))
-    (send style-delta set-delta-foreground "blue")
-    (send output change-style style-delta)
-    (send output move-position 'end)
-    (send output insert (format "~a~%" program))
-    (send style-delta set-delta-foreground "black")
-    (send output change-style style-delta)
-    ;; Run program
-    (eval code))
+    (with-handlers
+      ([exn:fail:parsing?
+        (lambda (e)
+          (let ([src (first (exn:fail:parsing-srclocs e))]
+                [msg (exn-message e)])
+            (print-with-colour "red" (format "Parsing error at line ~a, column ~a: ~a."
+                                             (srcloc-line src)
+                                             (srcloc-column src)
+                                             msg))))])
+      (define code (parse-logo (open-input-string program)))
+      (print-with-colour "blue" program)
+      ;; Run program
+      (eval code)))
   (define (clear-screen button event)
     (send bc erase)
     (send dc erase))
@@ -146,6 +157,8 @@
     (define path (get-file #f frame))
     (when path
       (send input load-file path 'text)))
+  (define (button-undo i e)
+    (logo-undo))
 
   ;; Turtle
   (define-values (starting-x starting-y starting-angle) (turtle-starting-position))
@@ -237,6 +250,10 @@
                              [parent clear-h]
                              [label "Clear screen"]
                              [callback clear-screen]))
+  (define undo          (new button%
+                             [parent clear-h]
+                             [label "Undo"]
+                             [callback button-undo]))
   (define submit-h      (new horizontal-pane%
                              [parent button-h]
                              [alignment '(right center)]))
