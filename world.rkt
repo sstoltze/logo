@@ -4,7 +4,8 @@
          brag/support
          racket/contract
          racket/gui
-         racket/draw)
+         racket/draw
+         racket/runtime-path)
 (provide (contract-out [scale-to-width   (-> number? world-size?)]
                        [scale-to-height  (-> number? world-size?)]
                        [world-max-width  (-> world-size?)]
@@ -20,10 +21,12 @@
                        [new-world        (->* () ((or/c #f path?)) world?)]
                        [turtle-starting-position (-> (values world-size? world-size? number?))]
                        [save-logo-state  (-> void?)]
-                       [logo-undo        (-> boolean?)]
-                       [draw-logo-canvas (-> boolean?)])
+                       [logo-undo        (-> draw/c)]
+                       [draw-logo-canvas (-> draw/c)])
          define/logo lambda/logo ;; Contract?
          )
+
+(define draw/c (or/c boolean? void?))
 
 (define *width*  800)
 (define *height* 800)
@@ -88,13 +91,26 @@
                                  pen
                                  (bitmap-context->bytes bc))))
   (set! current-world-canvas dc))
+(define-runtime-path turtle-image-path "./images/logo-turtle.png")
+(define turtle-bitmap (read-bitmap turtle-image-path 'png))
 (define (draw-logo-canvas)
-  (define bitmap-context (world-drawing-context (current-world)))
+  (match-define (world t bitmap-context _) (current-world))
+  (match-define (turtle x y ang _) t)
   (define bitmap (send bitmap-context get-bitmap))
   (send current-world-canvas clear)
   (send current-world-canvas draw-bitmap bitmap 0 0)
-  ;; Draw turtle ...
-  )
+  ;; Draw turtle
+  (let ([t-x (- x (/ (send turtle-bitmap get-width)  2))]
+        [t-y (- y (/ (send turtle-bitmap get-height) 2))])
+    (define rotate-bitmap (make-bitmap (send turtle-bitmap get-width)
+                                       (send turtle-bitmap get-height)))
+    (define turtle-dc (send rotate-bitmap make-dc))
+    (send turtle-dc clear)
+    (send turtle-dc set-rotation ang)
+    (send turtle-dc draw-bitmap turtle-bitmap 0 0 'opaque)
+    ;(send current-world-canvas set-rotation ang)
+    (send current-world-canvas draw-bitmap rotate-bitmap t-x t-y 'opaque)
+    (send current-world-canvas set-rotation 0)))
 
 (define (world-size? s)
   (and (number? s) (>=/c 0)))
@@ -204,7 +220,8 @@
                              [min-width          *width*]
                              [min-height         *height*]
                              [stretchable-width  #f]
-                             [stretchable-height #f]))
+                             [stretchable-height #f]
+                             [paint-callback     (lambda (c dc) (draw-logo-canvas))]))
   (define dc            (send canvas get-dc))
   (define b             (make-bitmap *width* *height*))
   (define bc            (send b make-dc))
