@@ -38,15 +38,18 @@
 (define *current-world-canvas* #f)
 (define *current-undo-list*    empty)
 
+(define-runtime-path *turtle-image-path* "./images/logo-turtle.png")
+(define *turtle-bitmap* (read-bitmap *turtle-image-path* 'png))
+
 (define-syntax (lambda/logo stx)
   (syntax-parse stx
     [(_ (define-id ...) statement ... last-statement)
      #'(lambda (define-id ...)
-           statement ...
-           (define result last-statement)
-           (save-logo-state)
-           (draw-logo-canvas)
-           result)]))
+         statement ...
+         (define result last-statement)
+         (save-logo-state)
+         (draw-logo-canvas)
+         result)]))
 
 (define-syntax (define/logo stx)
   (syntax-parse stx
@@ -55,13 +58,18 @@
          (lambda/logo (arg ...)
                       statement ...))]))
 
-;; state is turtle, pen, bitmap
 (define (save-logo-state)
   (match-define (world turt context _) (current-world))
   (set! *current-undo-list* (cons (list (struct-copy turtle turt)
-                                      (send context get-pen)
-                                      (bitmap-context->bytes context))
-                                *current-undo-list*)))
+                                        (send context get-pen)
+                                        (bitmap-context->bytes context))
+                                  *current-undo-list*)))
+(define (bitmap-context->bytes bc)
+  (define bitmap (send bc get-bitmap))
+  (define output-port (open-output-bytes))
+  (send bitmap save-file output-port 'png)
+  (close-output-port output-port)
+  (get-output-bytes output-port))
 (define (restore-logo-state turtle pen bitmap)
   (match-define (world _ context _) (current-world))
   (restore-turtle turtle)
@@ -70,12 +78,6 @@
   (define new-bitmap  (read-bitmap input-port 'png))
   (define new-context (send new-bitmap make-dc))
   (set-world-drawing-context! (current-world) new-context))
-(define (bitmap-context->bytes bc)
-  (define bitmap (send bc get-bitmap))
-  (define output-port (open-output-bytes))
-  (send bitmap save-file output-port 'png)
-  (close-output-port output-port)
-  (get-output-bytes output-port))
 (define (restore-turtle turtle)
   (set-world-turtle! (current-world) turtle))
 (define (logo-undo)
@@ -87,32 +89,28 @@
     (draw-logo-canvas)))
 (define (reset-logo-state turt pen bc dc)
   (set! *current-undo-list* (list
-                           (list (struct-copy turtle turt)
-                                 pen
-                                 (bitmap-context->bytes bc))))
+                             (list (struct-copy turtle turt)
+                                   pen
+                                   (bitmap-context->bytes bc))))
   (set! *current-world-canvas* dc))
-(define-runtime-path turtle-image-path "./images/logo-turtle.png")
-(define turtle-bitmap (read-bitmap turtle-image-path 'png))
-
 
 (define (draw-logo-canvas)
   (match-define (world t bitmap-context _) (current-world))
   (match-define (turtle x y ang _) t)
   (define bitmap (send bitmap-context get-bitmap))
-  (send current-world-canvas clear)
-  (send current-world-canvas draw-bitmap bitmap 0 0)
+  (send *current-world-canvas* clear)
+  (send *current-world-canvas* draw-bitmap bitmap 0 0)
   ;; Draw turtle
-  (let ([t-x (- x (/ (send turtle-bitmap get-width)  2))]
-        [t-y (- y (/ (send turtle-bitmap get-height) 2))])
-    (define rotate-bitmap (make-bitmap (send turtle-bitmap get-width)
-                                       (send turtle-bitmap get-height)))
+  (let* ([side (max (send *turtle-bitmap* get-width)
+                    (send *turtle-bitmap* get-height))]
+         [half-side (/ side 2)])
+    (define rotate-bitmap (make-bitmap side side))
     (define turtle-dc (send rotate-bitmap make-dc))
     (send turtle-dc clear)
-    (send turtle-dc set-rotation ang)
-    (send turtle-dc draw-bitmap turtle-bitmap 0 0 'opaque)
-    ;(send current-world-canvas set-rotation ang)
-    (send *current-world-canvas* draw-bitmap rotate-bitmap t-x t-y 'opaque)
-    (send *current-world-canvas* set-rotation 0)))
+    (send turtle-dc set-origin half-side half-side)
+    (send turtle-dc set-rotation (- ang))
+    (send turtle-dc draw-bitmap *turtle-bitmap* (- half-side) (- half-side) 'opaque)
+    (send *current-world-canvas* draw-bitmap rotate-bitmap (- x half-side) (- y half-side) 'opaque)))
 
 (define (world-size? s)
   (and (number? s) (>=/c 0)))
@@ -159,10 +157,10 @@
       (print-with-colour "blue" program)
       ;; Run program
       (eval code)))
-  (define (clear-screen button event)
+  (define/logo (clear-screen button event)
     (send bc erase)
     (send dc erase))
-  (define (reset-turtle button event)
+  (define/logo (reset-turtle button event)
     (define-values (starting-x starting-y starting-angle) (turtle-starting-position))
     (set-turtle-x!     turt starting-x)
     (set-turtle-y!     turt starting-y)
