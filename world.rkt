@@ -34,9 +34,9 @@
 (struct turtle (x y angle pen-down) #:mutable)
 (struct world  (turtle drawing-context output-text) #:mutable)
 
-(define current-world        (make-parameter #f))
-(define current-world-canvas #f)
-(define current-undo-list    empty)
+(define current-world          (make-parameter #f))
+(define *current-world-canvas* #f)
+(define *current-undo-list*    empty)
 
 (define-syntax (lambda/logo stx)
   (syntax-parse stx
@@ -58,10 +58,10 @@
 ;; state is turtle, pen, bitmap
 (define (save-logo-state)
   (match-define (world turt context _) (current-world))
-  (set! current-undo-list (cons (list (struct-copy turtle turt)
+  (set! *current-undo-list* (cons (list (struct-copy turtle turt)
                                       (send context get-pen)
                                       (bitmap-context->bytes context))
-                                current-undo-list)))
+                                *current-undo-list*)))
 (define (restore-logo-state turtle pen bitmap)
   (match-define (world _ context _) (current-world))
   (restore-turtle turtle)
@@ -79,20 +79,22 @@
 (define (restore-turtle turtle)
   (set-world-turtle! (current-world) turtle))
 (define (logo-undo)
-  (unless (or (empty? current-undo-list)
-              (empty? (rest current-undo-list)))
-    (match-define (list t p b) (second current-undo-list))
+  (unless (or (empty? *current-undo-list*)
+              (empty? (rest *current-undo-list*)))
+    (match-define (list t p b) (second *current-undo-list*))
     (restore-logo-state t p b)
-    (set! current-undo-list (rest current-undo-list))
+    (set! *current-undo-list* (rest *current-undo-list*))
     (draw-logo-canvas)))
 (define (reset-logo-state turt pen bc dc)
-  (set! current-undo-list (list
+  (set! *current-undo-list* (list
                            (list (struct-copy turtle turt)
                                  pen
                                  (bitmap-context->bytes bc))))
-  (set! current-world-canvas dc))
+  (set! *current-world-canvas* dc))
 (define-runtime-path turtle-image-path "./images/logo-turtle.png")
 (define turtle-bitmap (read-bitmap turtle-image-path 'png))
+
+
 (define (draw-logo-canvas)
   (match-define (world t bitmap-context _) (current-world))
   (match-define (turtle x y ang _) t)
@@ -109,8 +111,8 @@
     (send turtle-dc set-rotation ang)
     (send turtle-dc draw-bitmap turtle-bitmap 0 0 'opaque)
     ;(send current-world-canvas set-rotation ang)
-    (send current-world-canvas draw-bitmap rotate-bitmap t-x t-y 'opaque)
-    (send current-world-canvas set-rotation 0)))
+    (send *current-world-canvas* draw-bitmap rotate-bitmap t-x t-y 'opaque)
+    (send *current-world-canvas* set-rotation 0)))
 
 (define (world-size? s)
   (and (number? s) (>=/c 0)))
@@ -129,7 +131,7 @@
   (define starting-angle-in-degrees 0)
   (values starting-x-position starting-y-position starting-angle-in-degrees))
 
-;; Setup current-world-canvas and current-undo-list
+;; Setup *current-world-canvas* and *current-undo-list*
 (define (new-world [source-file #f])
   ;; Button callbacks
   (define (submit-program button event)
