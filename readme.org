@@ -1,4 +1,4 @@
-#+AUTHOR: Simon Stoltze
+#+AUTHOR: Sarah Stoltze
 #+EMAIL: sstoltze@gmail.com
 #+DATE: 2019-04-05
 #+OPTIONS: toc:nil title:nil author:nil email:nil date:nil creator:nil
